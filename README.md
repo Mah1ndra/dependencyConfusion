@@ -11,4 +11,4 @@ Dependency-check is tool used for finding any potential library project vulnerab
 
 sample usage:
 
-go run main.go -u <url> 
+go run main.go -u URL_HERE
