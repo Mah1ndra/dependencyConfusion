@@ -40,7 +40,7 @@ func parseLib(data string) []string {
 		//adding lib to new arr
 		for _, val := range lib {
 			val = strings.TrimSpace(val)
-			if len(val) == 0 || val == ")" || val == "require" {
+			if len(val) == 0 || val == ")" || val == "require" || val == "replace" {
 				continue
 			}
 			libs = append(libs, strings.TrimSpace(val))
@@ -64,6 +64,7 @@ func getLibs(url string, client *http.Client) []string {
 	respBody := string(body)
 
 	return parseLib(respBody)
+
 }
 
 func usage() {
@@ -116,4 +117,5 @@ func main() {
 		libs := getLibs(*target, client)
 		dependencyCheck(libs, client)
 	}
+	fmt.Println()
 }
