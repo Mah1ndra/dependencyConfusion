@@ -34,7 +34,7 @@ func dependencyCheck(libs []string, client *http.Client) {
 
 func parseLib(url string, client *http.Client) []string {
 	//parse github raw string
-	//ex: https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/go.mod
+	//ex: https://raw.githubusercontent.com/<project>
 	resp, err := client.Get(url)
 	if err != nil {
 		log.Fatalln(err)
