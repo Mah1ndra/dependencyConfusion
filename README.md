@@ -1,14 +1,17 @@
 DependencyConfusion is tool used for finding any library used by the project that might be vulnerable to dependency confusion attack. 
 	
-	Project with following lagnuages supported:
+	Project with following languages supported:
 	- Golang
 	- python (still in progress)
 	- c/c++ (still in progress)
 
 	Flags:
-		-u, --url  provide github go.mod raw rul
+		-u, --url  provide github go.mod raw url
+    -f, --file path to local module file
 		-v, --verbose  Print verbose logs to stderr.
 
 sample usage:
 
-go run main.go -u URL_HERE
+For remote project: go run main.go -u URL_HERE
+
+For local project: go run main.go -f /tmp/myproject/go.mod

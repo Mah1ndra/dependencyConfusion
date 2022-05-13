@@ -32,7 +32,22 @@ func dependencyCheck(libs []string, client *http.Client) {
 	}
 }
 
-func parseLib(url string, client *http.Client) []string {
+func parseLib(data string) []string {
+	result := strings.Split(data, "(")
+	lib := strings.Split(result[1], "\n")
+	//adding lib to new arr
+	libs := []string{}
+	for _, val := range lib {
+		val = strings.TrimSpace(val)
+		if len(val) == 0 || val == ")" {
+			continue
+		}
+		libs = append(libs, strings.TrimSpace(val))
+	}
+	return libs
+}
+
+func getLibs(url string, client *http.Client) []string {
 	//parse github raw string
 	//ex: https://raw.githubusercontent.com/<project>
 	resp, err := client.Get(url)
@@ -45,44 +60,34 @@ func parseLib(url string, client *http.Client) []string {
 		log.Fatalln(err)
 	}
 	respBody := string(body)
-	//splitting to obtain lib names
-	result := strings.Split(respBody, "(")
-	lib := strings.Split(result[1], "\n")
-	//adding lib to new arr
-	libs := []string{}
-	for _, val := range lib {
-		val = strings.TrimSpace(val)
-		if len(val) == 0 || val == ")" {
-			continue
-		}
-		libs = append(libs, strings.TrimSpace(val))
-	}
 
-	return libs
+	return parseLib(respBody)
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `Usage: dependency-check [flag] [URL]
+	fmt.Fprint(os.Stderr, `Usage: dependency-check [flag] [URL/localFile]
 	DependencyConfusion is tool used for finding any library used by the project that might be vulnerable to dependency confusion attack.
-	Project with following lagnuages supported:
+	Project with following languages supported:
 	- Golang
 	- python
 	- c/c++
 
 	Flags:
-		-u, --url  target url of the project
+		-u, --url  provide github raw url
+		-f, --file path to local module file 
 		-v, --verbose  Print verbose logs to stderr.
 	`)
 }
 
 func main() {
-	target := flag.String("u", "", "specify url/dirPath")
+	target := flag.String("u", "", "specify url")
+	localFile := flag.String("f", "", "specify path to local module file")
 	flag.Parse()
-	if len(*target) == 0 {
+	if len(*target) == 0 && len(*localFile) == 0 {
 		usage()
 		os.Exit(1)
 	}
-	os.Setenv("http_proxy", "http://127.0.0.1:8080")
+	//os.Setenv("http_proxy", "http://127.0.0.1:8080")
 	//proxy: https://iamninad.com/posts/burp-suite-for-web-app-testing-go-lang/
 	//proxyURL, e := url.Parse(os.Getenv("http_proxy"))
 	//if e != nil {
@@ -95,7 +100,17 @@ func main() {
 	//		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	//	},
 	//}
+
 	client := &http.Client{}
-	libs := parseLib(*target, client)
-	dependencyCheck(libs, client)
+	if len(*target) == 0 {
+		data, err := os.ReadFile(*localFile)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		libs := parseLib(string(data))
+		dependencyCheck(libs, client)
+	} else {
+		libs := getLibs(*target, client)
+		dependencyCheck(libs, client)
+	}
 }
