@@ -35,7 +35,6 @@ func dependencyCheck(libs []string, client *http.Client) {
 func parseLib(data string) []string {
 	libs := []string{}
 	result := strings.Split(data, "(")
-	fmt.Println(data)
 	for i := 1; i < len(result); i++ {
 		lib := strings.Split(result[i], "\n")
 		//adding lib to new arr
