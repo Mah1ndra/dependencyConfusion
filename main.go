@@ -63,7 +63,7 @@ func parseLib(url string, client *http.Client) []string {
 
 func usage() {
 	fmt.Fprint(os.Stderr, `Usage: dependency-check [flag] [URL]
-	Dependency-check is tool used for finding any potential library project vulnerable to dependency confusion attack for the given project. 
+	DependencyConfusion is tool used for finding any library used by the project that might be vulnerable to dependency confusion attack.
 	Project with following lagnuages supported:
 	- Golang
 	- python

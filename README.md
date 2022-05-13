@@ -1,4 +1,4 @@
-DependencyConfusion is tool used for finding any potential library project vulnerable to dependency confusion attack for the given project. 
+DependencyConfusion is tool used for finding any library used by the project that might be vulnerable to dependency confusion attack. 
 	
 	Project with following lagnuages supported:
 	- Golang
