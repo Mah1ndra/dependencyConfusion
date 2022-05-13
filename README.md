@@ -15,3 +15,5 @@ sample usage:
 For remote project: go run main.go -u URL_HERE
 
 For local project: go run main.go -f /tmp/myproject/go.mod
+
+![](./poc.png)

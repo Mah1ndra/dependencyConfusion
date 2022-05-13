@@ -33,16 +33,19 @@ func dependencyCheck(libs []string, client *http.Client) {
 }
 
 func parseLib(data string) []string {
-	result := strings.Split(data, "(")
-	lib := strings.Split(result[1], "\n")
-	//adding lib to new arr
 	libs := []string{}
-	for _, val := range lib {
-		val = strings.TrimSpace(val)
-		if len(val) == 0 || val == ")" {
-			continue
+	result := strings.Split(data, "(")
+	fmt.Println(data)
+	for i := 1; i < len(result); i++ {
+		lib := strings.Split(result[i], "\n")
+		//adding lib to new arr
+		for _, val := range lib {
+			val = strings.TrimSpace(val)
+			if len(val) == 0 || val == ")" || val == "require" {
+				continue
+			}
+			libs = append(libs, strings.TrimSpace(val))
 		}
-		libs = append(libs, strings.TrimSpace(val))
 	}
 	return libs
 }
@@ -108,6 +111,7 @@ func main() {
 			log.Fatalln(err)
 		}
 		libs := parseLib(string(data))
+		fmt.Println(libs)
 		dependencyCheck(libs, client)
 	} else {
 		libs := getLibs(*target, client)
