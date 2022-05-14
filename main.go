@@ -117,5 +117,4 @@ func main() {
 		libs := getLibs(*target, client)
 		dependencyCheck(libs, client)
 	}
-	fmt.Println()
 }
