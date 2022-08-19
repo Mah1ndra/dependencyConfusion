@@ -11,12 +11,40 @@ import (
 )
 
 const goPkg = "https://pkg.go.dev/"
+const perlPkg = "https://perldoc.perl.org/"
 const colorRed = "\033[31m"
 const colorGreen = "\033[32m"
+
+func trimQuotes(s string) string {
+	if len(s) >= 2 {
+		if c := s[len(s)-1]; s[0] == c && (c == '"' || c == '\'') {
+			return s[1 : len(s)-1]
+		}
+	}
+	return s
+}
 
 func dependencyCheck(libs []string, client *http.Client) {
 	for _, val := range libs {
 		url := goPkg + val
+		pkgUrl := strings.Split(url, " ")
+		resp, err := client.Get(pkgUrl[0])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		status := resp.StatusCode
+		if status == 200 {
+			fmt.Println(url, string(colorGreen), status)
+		} else {
+			fmt.Println(url, string(colorRed), status)
+		}
+
+	}
+}
+
+func perl_dependencyCheck(libs []string, client *http.Client) {
+	for _, val := range libs {
+		url := perlPkg + trimQuotes(val)
 		pkgUrl := strings.Split(url, " ")
 		resp, err := client.Get(pkgUrl[0])
 		if err != nil {
@@ -49,6 +77,36 @@ func parseLib(data string) []string {
 	return libs
 }
 
+func perl_parseLib(data string) []string {
+	libs := []string{}
+	result := strings.Split(data, "=> {")
+	result = strings.Split(result[4], "}")
+	result = strings.Split(result[0], "\n")
+	for _, val := range result {
+		val = strings.TrimSpace(val)
+		result := strings.Split(val, "=>")
+		libs = append(libs, strings.TrimSpace(result[0]))
+	}
+	//fmt.Println(reflect.TypeOf(result[0]).Kind())
+	return libs
+}
+
+func perl_getLibs(url string, client *http.Client) []string {
+	//parse github raw string
+	//ex: https://raw.githubusercontent.com/<project>
+	resp, err := client.Get(url)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// read resp body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	respBody := string(body)
+	return perl_parseLib(respBody)
+}
+
 func getLibs(url string, client *http.Client) []string {
 	//parse github raw string
 	//ex: https://raw.githubusercontent.com/<project>
@@ -78,6 +136,7 @@ func usage() {
 	Flags:
 		-u, --url  provide github raw url
 		-f, --file path to local module file 
+		-l, --lang programming language
 		-v, --verbose  Print verbose logs to stderr.
 	`)
 }
@@ -85,6 +144,7 @@ func usage() {
 func main() {
 	target := flag.String("u", "", "specify url")
 	localFile := flag.String("f", "", "specify path to local module file")
+	lang := flag.String("l", "", "specify programming language")
 	flag.Parse()
 	if len(*target) == 0 && len(*localFile) == 0 {
 		usage()
@@ -110,11 +170,21 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		libs := parseLib(string(data))
-		fmt.Println(libs)
-		dependencyCheck(libs, client)
+		if *lang == "perl" {
+			libs := perl_parseLib(string(data))
+			perl_dependencyCheck(libs, client)
+		} else if *lang == "go" {
+			libs := parseLib(string(data))
+			dependencyCheck(libs, client)
+		}
 	} else {
-		libs := getLibs(*target, client)
-		dependencyCheck(libs, client)
+		if *lang == "perl" {
+			libs := perl_getLibs(*target, client)
+			perl_dependencyCheck(libs, client)
+		} else if *lang == "go" {
+			libs := getLibs(*target, client)
+			dependencyCheck(libs, client)
+		}
+
 	}
 }
