@@ -60,6 +60,24 @@ func perl_dependencyCheck(libs []string, client *http.Client) {
 	}
 }
 
+func ruby_dependencyCheck(libs []string, client *http.Client) {
+	for _, val := range libs {
+		url := perlPkg + trimQuotes(val)
+		pkgUrl := strings.Split(url, " ")
+		resp, err := client.Get(pkgUrl[0])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		status := resp.StatusCode
+		if status == 200 {
+			fmt.Println(url, string(colorGreen), status)
+		} else {
+			fmt.Println(url, string(colorRed), status)
+		}
+
+	}
+}
+
 func parseLib(data string) []string {
 	libs := []string{}
 	result := strings.Split(data, "(")
@@ -90,6 +108,13 @@ func perl_parseLib(data string) []string {
 	//fmt.Println(reflect.TypeOf(result[0]).Kind())
 	return libs
 }
+func ruby_parseLib(data string) []string {
+	libs := []string{}
+	result := strings.Split(data, "\n")
+	fmt.Println(result)
+	//fmt.Println(reflect.TypeOf(result[0]).Kind())
+	return libs
+}
 
 func perl_getLibs(url string, client *http.Client) []string {
 	//parse github raw string
@@ -105,6 +130,22 @@ func perl_getLibs(url string, client *http.Client) []string {
 	}
 	respBody := string(body)
 	return perl_parseLib(respBody)
+}
+
+func ruby_getLibs(url string, client *http.Client) []string {
+	//parse github raw string
+	//ex: https://raw.githubusercontent.com/<project>
+	resp, err := client.Get(url)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// read resp body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	respBody := string(body)
+	return ruby_parseLib(respBody)
 }
 
 func getLibs(url string, client *http.Client) []string {
@@ -130,6 +171,8 @@ func usage() {
 	DependencyConfusion is tool used for finding any library used by the project that might be vulnerable to dependency confusion attack.
 	Project with following languages supported:
 	- Golang
+	- perl
+	- ruby
 	- python
 	- c/c++
 
@@ -176,6 +219,9 @@ func main() {
 		} else if *lang == "go" {
 			libs := parseLib(string(data))
 			dependencyCheck(libs, client)
+		} else if *lang == "ruby" {
+			libs := ruby_parseLib(string(data))
+			ruby_dependencyCheck(libs, client)
 		}
 	} else {
 		if *lang == "perl" {
@@ -184,6 +230,10 @@ func main() {
 		} else if *lang == "go" {
 			libs := getLibs(*target, client)
 			dependencyCheck(libs, client)
+		} else if *lang == "ruby" {
+			libs := ruby_getLibs(*target, client)
+			fmt.Println(libs)
+			//ruby_dependencyCheck(libs, client)
 		}
 
 	}
